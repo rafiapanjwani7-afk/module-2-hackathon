@@ -111,7 +111,7 @@ function applyTheme(theme) {
     if (notifBtn) {
         notifBtn.style.setProperty(
             "color",
-            theme === "dark" ? "#ffffff" : "#0f172a",
+            theme === "dark" ? "#ffffff" : "#000",
             "important"
         );
     }

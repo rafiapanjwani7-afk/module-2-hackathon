@@ -496,8 +496,13 @@ function renderStudyPartners(partners) {
 
   container.appendChild(fragment);
 
+  // container.querySelectorAll(".connect-btn").forEach(button => {
+  //   button.addEventListener("click", () => connectPartner(button.dataset.id, button.dataset.name));
+  // });
   container.querySelectorAll(".connect-btn").forEach(button => {
-    button.addEventListener("click", () => connectPartner(button.dataset.id, button.dataset.name));
+    button.addEventListener("click", () => 
+      connectPartner(button.dataset.id, button.dataset.name, button)
+    );
   });
 
   container.querySelectorAll(".edit-btn").forEach(button => {
@@ -838,7 +843,50 @@ async function deletePartner(id) {
 // CONNECT PARTNER
 // =====================================================
 
-async function connectPartner(targetUserId, name) {
+// async function connectPartner(targetUserId, name) {
+//   if (!userid) {
+//     await showAlert({
+//       icon: "warning",
+//       title: "Login Required",
+//       text: "Please login first to send connection requests."
+//     });
+//     return;
+//   }
+
+//   const result = await showAlert({
+//     title: "Send Request?",
+//     text: `Do you want to connect with ${name}?`,
+//     icon: "question",
+//     showCancelButton: true,
+//     confirmButtonText: "Yes, Send Request",
+//     cancelButtonText: "Cancel"
+//   });
+
+//   if (!result.isConfirmed) return;
+
+//   if (targetUserId) {
+//     await createNotification({
+//       userId: targetUserId,
+//       actorId: userid,
+//       actorName: userName,
+//       type: "connection_request",
+//       message: `${userName} sent you a study partner request.`
+//     });
+//   }
+
+//   await showAlert({
+//     icon: "success",
+//     title: "Request Sent!",
+//     text: `Connection request sent to ${name}.`,
+//     timer: 1500,
+//     showConfirmButton: false
+//   });
+// }
+// =====================================================
+// CONNECT / DISCONNECT PARTNER
+// =====================================================
+
+async function connectPartner(targetUserId, name, buttonElement) {
   if (!userid) {
     await showAlert({
       icon: "warning",
@@ -848,34 +896,71 @@ async function connectPartner(targetUserId, name) {
     return;
   }
 
-  const result = await showAlert({
-    title: "Send Request?",
-    text: `Do you want to connect with ${name}?`,
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: "Yes, Send Request",
-    cancelButtonText: "Cancel"
-  });
+  const isConnected = buttonElement.classList.contains("connected");
 
-  if (!result.isConfirmed) return;
-
-  if (targetUserId) {
-    await createNotification({
-      userId: targetUserId,
-      actorId: userid,
-      actorName: userName,
-      type: "connection_request",
-      message: `${userName} sent you a study partner request.`
+  if (!isConnected) {
+    // ---- CONNECT LOGIC ----
+    const result = await showAlert({
+      title: "Send Request?",
+      text: `Do you want to connect with ${name}?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Send Request",
+      cancelButtonText: "Cancel"
     });
-  }
 
-  await showAlert({
-    icon: "success",
-    title: "Request Sent!",
-    text: `Connection request sent to ${name}.`,
-    timer: 1500,
-    showConfirmButton: false
-  });
+    if (!result.isConfirmed) return;
+
+    if (targetUserId) {
+      await createNotification({
+        userId: targetUserId,
+        actorId: userid,
+        actorName: userName,
+        type: "connection_request",
+        message: `${userName} sent you a study partner request.`
+      });
+    }
+
+    await showAlert({
+      icon: "success",
+      title: "Request Sent!",
+      text: `Connection request sent to ${name}.`,
+      timer: 1500,
+      showConfirmButton: false
+    });
+
+    // Button UI state change to Disconnect
+    buttonElement.classList.add("connected", "btn-outline-danger");
+    buttonElement.classList.remove("btn-emerald");
+    buttonElement.innerHTML = `<i class="fa-solid fa-user-xmark me-1"></i> Disconnect`;
+
+  } else {
+    // ---- DISCONNECT LOGIC ----
+    const result = await showAlert({
+      title: "Disconnect Partner?",
+      text: `Are you sure you want to disconnect from ${name}?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Disconnect",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#ef4444"
+    });
+
+    if (!result.isConfirmed) return;
+
+    await showAlert({
+      icon: "success",
+      title: "Disconnected",
+      text: `You have disconnected from ${name}.`,
+      timer: 1500,
+      showConfirmButton: false
+    });
+
+    // Button UI state change back to Connect
+    buttonElement.classList.remove("connected", "btn-outline-danger");
+    buttonElement.classList.add("btn-emerald");
+    buttonElement.innerHTML = `<i class="fa-solid fa-paper-plane me-1"></i> Connect`;
+  }
 }
 
 // =====================================================
@@ -936,6 +1021,14 @@ function applyTheme(theme) {
       "important"
     );
   });
+  const notifBtn = document.getElementById("notifDropdown") || document.getElementById("notifBtn");
+    if (notifBtn) {
+        notifBtn.style.setProperty(
+            "color",
+            theme === "dark" ? "#ffffff" : "#000",
+            "important"
+        );
+    }
 }
 
 function initTheme() {

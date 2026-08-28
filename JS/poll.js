@@ -747,66 +747,272 @@ async function logout() {
 // ADD POLL OPTION
 // =====================================================
 
+// function setupDynamicOptions() {
+
+//     const addOptionBtn =
+//         document.getElementById(
+//             "addOptionBtn"
+//         );
+
+//     const optionsContainer =
+//         document.getElementById(
+//             "optionsContainer"
+//         );
+
+
+//     if (
+//         !addOptionBtn ||
+//         !optionsContainer
+//     ) {
+//         return;
+//     }
+
+
+//     addOptionBtn.addEventListener(
+//         "click",
+//         () => {
+
+//             const count =
+//                 optionsContainer
+//                     .querySelectorAll(
+//                         ".option-input"
+//                     )
+//                     .length;
+
+
+//             const input =
+//                 document.createElement(
+//                     "input"
+//                 );
+
+
+//             input.type = "text";
+
+//             input.className =
+//                 "form-control option-input mb-2";
+
+//             input.placeholder =
+//                 `Option ${count + 1}`;
+
+//             input.maxLength =
+//                 150;
+
+//             input.required =
+//                 true;
+
+
+//             optionsContainer.appendChild(
+//                 input
+//             );
+
+
+//             input.focus();
+
+//         }
+//     );
+// }
+// =====================================================
+// POLL OPTION HELPERS
+// =====================================================
+
+function createOptionInput(number) {
+
+    const wrapper = document.createElement("div");
+
+    wrapper.className = "option-input-wrapper mb-2";
+
+    wrapper.innerHTML = `
+        <input
+            type="text"
+            class="form-control option-input"
+            placeholder="Option ${number}"
+            maxlength="150"
+            required
+        >
+
+        <button
+            type="button"
+            class="delete-option-btn"
+            title="Remove option"
+        >
+            <i class="bi bi-x-lg"></i>
+        </button>
+    `;
+
+    const deleteBtn =
+        wrapper.querySelector(".delete-option-btn");
+
+    deleteBtn.addEventListener("click", () => {
+
+        const optionsContainer =
+            document.getElementById("optionsContainer");
+
+        const totalOptions =
+            optionsContainer.querySelectorAll(
+                ".option-input-wrapper"
+            ).length;
+
+        // Minimum 2 options
+        if (totalOptions <= 2) {
+
+            showAlert({
+                icon: "warning",
+                title: "Minimum 2 Options",
+                text: "A poll must have at least two options."
+            });
+
+            return;
+        }
+
+        wrapper.remove();
+
+        updateOptionNumbers();
+        updateDeleteButtons();
+    });
+
+    return wrapper;
+}
+
+
+// =====================================================
+// UPDATE OPTION NUMBERS
+// =====================================================
+
+function updateOptionNumbers() {
+
+    const optionsContainer =
+        document.getElementById("optionsContainer");
+
+    if (!optionsContainer) return;
+
+    optionsContainer
+        .querySelectorAll(".option-input")
+        .forEach((input, index) => {
+
+            input.placeholder =
+                `Option ${index + 1}`;
+
+        });
+}
+
+
+// =====================================================
+// UPDATE DELETE BUTTONS
+// =====================================================
+
+function updateDeleteButtons() {
+
+    const optionsContainer =
+        document.getElementById("optionsContainer");
+
+    if (!optionsContainer) return;
+
+    const rows =
+        optionsContainer.querySelectorAll(
+            ".option-input-wrapper"
+        );
+
+    rows.forEach(row => {
+
+        const deleteBtn =
+            row.querySelector(
+                ".delete-option-btn"
+            );
+
+        if (deleteBtn) {
+
+            deleteBtn.disabled =
+                rows.length <= 2;
+
+        }
+
+    });
+}
+
+
+// =====================================================
+// ADD POLL OPTION
+// =====================================================
+
 function setupDynamicOptions() {
 
     const addOptionBtn =
-        document.getElementById(
-            "addOptionBtn"
-        );
+        document.getElementById("addOptionBtn");
 
     const optionsContainer =
-        document.getElementById(
-            "optionsContainer"
-        );
+        document.getElementById("optionsContainer");
 
-
-    if (
-        !addOptionBtn ||
-        !optionsContainer
-    ) {
+    if (!addOptionBtn || !optionsContainer) {
         return;
     }
 
+
+    // ---------------------------------------------
+    // Convert existing inputs into wrappers
+    // ---------------------------------------------
+
+    const existingInputs =
+        Array.from(
+            optionsContainer.querySelectorAll(
+                ".option-input"
+            )
+        );
+
+    optionsContainer.innerHTML = "";
+
+
+    existingInputs.forEach((oldInput, index) => {
+
+        const wrapper =
+            createOptionInput(index + 1);
+
+        const input =
+            wrapper.querySelector(
+                ".option-input"
+            );
+
+        input.value =
+            oldInput.value || "";
+
+        optionsContainer.appendChild(
+            wrapper
+        );
+
+    });
+
+
+    updateOptionNumbers();
+    updateDeleteButtons();
+
+
+    // ---------------------------------------------
+    // Add new option
+    // ---------------------------------------------
 
     addOptionBtn.addEventListener(
         "click",
         () => {
 
             const count =
-                optionsContainer
-                    .querySelectorAll(
-                        ".option-input"
-                    )
-                    .length;
+                optionsContainer.querySelectorAll(
+                    ".option-input-wrapper"
+                ).length;
 
-
-            const input =
-                document.createElement(
-                    "input"
+            const wrapper =
+                createOptionInput(
+                    count + 1
                 );
 
-
-            input.type = "text";
-
-            input.className =
-                "form-control option-input mb-2";
-
-            input.placeholder =
-                `Option ${count + 1}`;
-
-            input.maxLength =
-                150;
-
-            input.required =
-                true;
-
-
             optionsContainer.appendChild(
-                input
+                wrapper
             );
 
+            updateOptionNumbers();
+            updateDeleteButtons();
 
-            input.focus();
+            wrapper
+                .querySelector(".option-input")
+                ?.focus();
 
         }
     );
@@ -939,7 +1145,50 @@ async function createPoll(
         return false;
     }
 }
+// =====================================================
+// DELETE POLL
+// =====================================================
+async function deletePoll(pollId) {
+    const confirm = await showAlert({
+        title: "Delete Poll?",
+        text: "Are you sure you want to delete this poll? This action cannot be undone.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, delete it",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#d33"
+    });
 
+    if (!confirm.isConfirmed) return;
+
+    try {
+        const { error } = await supabase
+            .from("polls")
+            .delete()
+            .eq("id", pollId)
+            .eq("user_id", userid); // Only creator can delete
+
+        if (error) throw error;
+
+        await showAlert({
+            icon: "success",
+            title: "Deleted!",
+            text: "Poll has been removed successfully.",
+            timer: 1500,
+            showConfirmButton: false
+        });
+
+        // Refresh polls list
+        fetchPolls();
+    } catch (error) {
+        console.error("Delete Poll Error:", error);
+        await showAlert({
+            icon: "error",
+            title: "Delete Failed",
+            text: error.message
+        });
+    }
+}
 
 // =====================================================
 // FETCH POLLS
@@ -1395,48 +1644,34 @@ function renderPolls(polls) {
                 "card poll-card shadow-sm mb-4";
 
 
-            card.innerHTML = `
+            // Card title ke sath Delete button tabhi show hoga jab current user hi creator hoga
+const isCreator = String(poll.user_id) === String(userid);
 
-                <div class="card-body p-4">
+card.innerHTML = `
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="card-title fw-bold mb-0">
+                ${escapeHTML(poll.question)}
+            </h5>
+            ${
+                isCreator 
+                ? `<button type="button" class="btn btn-outline-danger btn-sm delete-poll-btn" data-poll-id="${poll.id}">
+                    <i class="bi bi-trash"></i>
+                   </button>` 
+                : ""
+            }
+        </div>
 
-                    <div
-                        class="d-flex justify-content-between align-items-start mb-2"
-                    >
+        <div class="text-muted small mb-4">
+            <i class="bi bi-bar-chart me-1"></i>
+            ${totalVotes} total vote${totalVotes === 1 ? "" : "s"}
+        </div>
 
-                        <h5
-                            class="card-title fw-bold mb-0"
-                        >
-
-                            ${escapeHTML(
-                                poll.question
-                            )}
-
-                        </h5>
-
-                    </div>
-
-
-                    <div
-                        class="text-muted small mb-4"
-                    >
-
-                        <i
-                            class="bi bi-bar-chart me-1"
-                        ></i>
-
-                        ${totalVotes}
-                        total vote${totalVotes === 1 ? "" : "s"}
-
-                    </div>
-
-
-                    <div>
-                        ${optionsHTML}
-                    </div>
-
-                </div>
-
-            `;
+        <div>
+            ${optionsHTML}
+        </div>
+    </div>
+`;
 
 
             container.appendChild(
@@ -1478,6 +1713,15 @@ function renderPolls(polls) {
 
                     }
                 );
+                // =================================================
+    // DELETE BUTTON EVENTS
+    // =================================================
+    container.querySelectorAll(".delete-poll-btn").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const pollId = button.dataset.pollId;
+            await deletePoll(pollId);
+        });
+    });
 
             }
         );
@@ -1738,29 +1982,29 @@ function setupPollForm() {
             form.reset();
 
 
+           
             if (optionsContainer) {
 
-                optionsContainer.innerHTML = `
+    optionsContainer.innerHTML = "";
 
-                    <input
-                        type="text"
-                        class="form-control option-input mb-2"
-                        placeholder="Option 1"
-                        maxlength="150"
-                        required
-                    >
+    const option1 =
+        createOptionInput(1);
 
-                    <input
-                        type="text"
-                        class="form-control option-input mb-2"
-                        placeholder="Option 2"
-                        maxlength="150"
-                        required
-                    >
+    const option2 =
+        createOptionInput(2);
 
-                `;
+    optionsContainer.appendChild(
+        option1
+    );
 
-            }
+    optionsContainer.appendChild(
+        option2
+    );
+
+    updateOptionNumbers();
+    updateDeleteButtons();
+}
+
 
 
             // Reload polls

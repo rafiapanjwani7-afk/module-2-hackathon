@@ -266,16 +266,39 @@ function createPostCard(post) {
                 <i class="bi bi-envelope-fill me-1" style="color: #38bdf8 !important; font-size: 11px;"></i>${displayEmail}
             </small>
         </span>
-        <div>
-            <button class="btn btn-sm"
-            onclick="editPost(event, ${post.id}, \`${escapedDesc}\`, \`${escapedTitle}\`, '${post.bg_img}', '${post.text_color}', '${currentTextColor}', '${post.user_id}')">
-                <i class="bi bi-pencil-square text-warning"></i>
-            </button>
-            <button class="btn btn-sm"
-            onclick="delpost(event, ${post.id}, '${post.user_id}')">
-                <i class="bi bi-trash text-danger"></i>
-            </button>
-        </div>
+        ${(String(userid) === String(post.user_id) || userRole === "admin") ? `
+    <div>
+        <button
+            class="btn btn-sm"
+            onclick="editPost(
+                event,
+                ${post.id},
+                \`${escapedDesc}\`,
+                \`${escapedTitle}\`,
+                '${post.bg_img}',
+                '${post.text_color}',
+                '${currentTextColor}',
+                '${post.user_id}'
+            )"
+            title="Edit Post"
+        >
+            <i class="bi bi-pencil-square text-warning"></i>
+        </button>
+
+        <button
+            class="btn btn-sm"
+            onclick="delpost(
+                event,
+                ${post.id},
+                '${post.user_id}'
+            )"
+            title="Delete Post"
+        >
+            <i class="bi bi-trash text-danger"></i>
+        </button>
+    </div>
+` : ""}
+
     </div>
 
     <div class="card-body" style="background-image:url('${post.bg_img}');background-size:cover;background-position:center; min-height: 140px;">
@@ -969,7 +992,7 @@ function applyTheme(theme) {
     if (notifBtn) {
         notifBtn.style.setProperty(
             "color",
-            theme === "dark" ? "#ffffff" : "#0f172a",
+            theme === "dark" ? "#ffffff" : "#000",
             "important"
         );
     }
